@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<section class="todo-container">
+    <div class="todo-box">
+        <div class="todo-header">
+            <h2>Hello, {{ request.user.username }}</h2>
+            <p>Manage your tasks below</p>
+        </div>
+
+        <!-- Task Creation Form -->
+        <form method="POST" class="todo-form">
+            {% csrf_token %}
+            <input type="text" name="title" placeholder="Enter task title..." required>
+            <textarea name="description" placeholder="Enter task description..." rows="3" required></textarea>
+            <button type="submit" class="btn">Add Task</button>
+        </form>
+
+        <!-- Task List Display -->
+        <ul class="todo-list">
+            {% for task in tasks %}
+                <li class="task-item {% if task.complete %}complete{% endif %}">
+                    <!-- Complete Toggle -->
+                    <form method="POST" action="{% url 'toggle-task' task.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="check-btn" title="Mark Complete/Incomplete">
+                            {% if task.complete %}✔{% else %}⭘{% endif %}
+                        </button>
+                    </form>
+
+                    <!-- Task Details -->
+                    <div class="task-text">
+                        <h4>{{ task.title }}</h4>
+                        <p>{{ task.description }}</p>
+                        <small>Created: {{ task.created|date:"M d, Y H:i" }}</small>
+
+                        <div class="task-actions">
+                            <!-- Edit Button -->
+                            <a href="{% url 'edit-task' task.id %}" class="action-btn edit-btn">✏ Edit</a>
+
+                            <!-- Delete Button -->
+                            <form method="POST" action="{% url 'delete-task' task.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn delete-btn">🗑 Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </li>
+            {% empty %}
+                <li class="no-task">No tasks yet. Add one above!</li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+
+<script>
+    document.querySelectorAll("form[action*='delete']").forEach(form => {
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const taskItem = this.closest(".task-item");
+            taskItem.classList.add("removing");
+
+            setTimeout(() => {
+                form.submit();
+            }, 300); // match CSS transition time
+        });
+    });
+</script>
+
+{% endblock content %}
